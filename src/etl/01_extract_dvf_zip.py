@@ -1,7 +1,7 @@
 import os
 import zipfile
 
-RAW_DIR = "../../data/raw/dvf"
+RAW_DIR = "../../data/raw/"
 EXTRACT_DIR = "../../data/extracted/dvf"
 
 os.makedirs(EXTRACT_DIR, exist_ok=True)
