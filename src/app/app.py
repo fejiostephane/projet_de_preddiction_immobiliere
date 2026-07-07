@@ -48,8 +48,17 @@ commune = communes_dept.loc[choix]                          # la ligne complète
 type_local      = st.sidebar.radio("Type de bien", ["Appartement", "Maison"])
 surface_bati    = st.sidebar.number_input("Surface habitable (m²)", 9, 1000, 70, step=5)
 nb_pieces       = st.sidebar.number_input("Nombre de pièces", 1, 20, 3, step=1)
-surface_terrain = st.sidebar.number_input("Surface terrain (m²)", 0, 10000, 0, step=50,
-                                          help="0 pour un appartement")
+
+# Terrain : adapté au type de bien (une maison a toujours du terrain, pas un appartement)
+if type_local == "Maison":
+    surface_terrain = st.sidebar.number_input(
+        "Surface terrain (m²)", min_value=10, max_value=10000,
+        value=int(median_terrain), step=50,
+        help="Une maison a toujours du terrain"
+    )
+else:  # Appartement
+    surface_terrain = 0
+    st.sidebar.caption("🏢 Appartement : pas de terrain (0 m²)")
 
 col1, col2 = st.sidebar.columns(2)
 annee = col1.selectbox("Année", [2021, 2022, 2023, 2024, 2025], index=4)
@@ -71,10 +80,7 @@ def haversine(lat1, lon1, lat2, lon2):
 if not estimer:
     st.info("👈 Renseigne les caractéristiques dans la barre latérale, puis clique sur **Estimer le prix**.")
 else:
-    # Maison sans terrain saisi -> médiane (comme à l'entraînement)
-    terrain = surface_terrain
-    if type_local == "Maison" and terrain == 0:
-        terrain = median_terrain
+    terrain = surface_terrain   # 0 pour un appartement, valeur saisie pour une maison
 
     # Reconstruction des 20 features, à l'identique de l'entraînement
     feat = {
