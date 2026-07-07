@@ -2,3 +2,5 @@ myvenv
 .venv
 readme.md
 data
+.env
+_pycache__/
