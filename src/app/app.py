@@ -49,7 +49,8 @@ type_local      = st.sidebar.radio("Type de bien", ["Appartement", "Maison"])
 surface_bati    = st.sidebar.number_input("Surface habitable (m²)", 9, 1000, 70, step=5)
 nb_pieces       = st.sidebar.number_input("Nombre de pièces", 1, 20, 3, step=1)
 
-# Terrain : adapté au type de bien (une maison a toujours du terrain, pas un appartement)
+# Terrain : champ pour les deux types, mais valeur par défaut adaptée
+# (une maison a quasi toujours du terrain ; un appartement rarement, mais possible : jardin/terrasse)
 if type_local == "Maison":
     surface_terrain = st.sidebar.number_input(
         "Surface terrain (m²)", min_value=10, max_value=10000,
@@ -57,8 +58,11 @@ if type_local == "Maison":
         help="Une maison a toujours du terrain"
     )
 else:  # Appartement
-    surface_terrain = 0
-    st.sidebar.caption("🏢 Appartement : pas de terrain (0 m²)")
+    surface_terrain = st.sidebar.number_input(
+        "Surface terrain (m²)", min_value=0, max_value=5000,
+        value=0, step=10,
+        help="0 si pas de jardin ; sinon surface du jardin / terrasse"
+    )
 
 col1, col2 = st.sidebar.columns(2)
 annee = col1.selectbox("Année", [2021, 2022, 2023, 2024, 2025], index=4)
