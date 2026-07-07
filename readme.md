@@ -11,14 +11,15 @@ Projet de Data Science de bout en bout : **collecte → ETL → base de données
 1. [Objectif du projet](#-objectif-du-projet)
 2. [Architecture générale](#-architecture-générale)
 3. [Sources de données](#-sources-de-données)
-4. [Structure du dépôt](#-structure-du-dépôt)
-5. [Installation & prérequis](#-installation--prérequis)
-6. [Le pipeline étape par étape](#-le-pipeline-étape-par-étape)
-7. [Résultats](#-résultats)
-8. [Choix méthodologiques clés](#-choix-méthodologiques-clés)
-9. [Limites & pistes d'amélioration](#-limites--pistes-daméliration)
-10. [Comment lancer le projet](#-comment-lancer-le-projet)
-11. [Auteur](#-auteur)
+4. [Télécharger le jeu de données (collecte)](#-télécharger-le-jeu-de-données-collecte)
+5. [Structure du dépôt](#-structure-du-dépôt)
+6. [Installation & prérequis](#-installation--prérequis)
+7. [Le pipeline étape par étape](#-le-pipeline-étape-par-étape)
+8. [Résultats](#-résultats)
+9. [Choix méthodologiques clés](#-choix-méthodologiques-clés)
+10. [Limites & pistes d'amélioration](#-limites--pistes-daméliration)
+11. [Comment lancer le projet](#-comment-lancer-le-projet)
+12. [Auteur](#-auteur)
 
 ---
 
@@ -75,6 +76,59 @@ Collecte  →  ETL  →  Data Warehouse (MySQL)  →  EDA  →  Feature Engineer
 | **Référentiel communes** (geo.api.gouv.fr) | Nom, code, département, région, population, coordonnées GPS | JSON | `data/raw/geo/communes_france.json` |
 | **Population communes** (INSEE) | Population par commune | CSV | `data/raw/insee/population_communes.csv` |
 | **Revenus / niveau de vie** (INSEE - Figaro) | Revenu médian par commune | CSV | `data/raw/insee/revenus_communes.csv` |
+
+---
+
+## 📥 Télécharger le jeu de données (collecte)
+
+Toutes les données du projet sont **publiques et gratuites**. Elles se récupèrent avec les scripts Python du dossier `src/`. Il n'y a **rien à télécharger à la main** : chaque script appelle directement l'API ou l'URL de la source et écrit le fichier dans `data/raw/`.
+
+> ⚠️ **Important — d'où lancer les scripts ?**
+> Les scripts utilisent des chemins **relatifs** (`../data/raw/...`). Il faut donc les exécuter **depuis le dossier `src/`**, sinon les fichiers ne se rangeront pas au bon endroit.
+> Prérequis : `pip install -r requirements.txt` (les scripts utilisent `requests` et `tqdm`).
+
+### 1. Scripts de téléchargement (ceux qui produisent les données)
+
+| Script (`src/`) | Ce qu'il télécharge | Source | Fichier(s) produit(s) |
+|---|---|---|---|
+| **`download_dvf.py`** | 🎯 Le cœur du projet : les **5 années de transactions DVF** (2021 → 2025) | data.gouv.fr | `data/raw/dvf_2021.zip` … `dvf_2025.zip` |
+| **`referenciel_des_comunes.py`** | Référentiel géographique des communes (nom, code, département, région, population, coordonnées GPS) | geo.api.gouv.fr | `data/raw/geo/communes_france.json` |
+| **`revenu_comunes_data.py`** | Revenu médian / niveau de vie par commune | INSEE (Figaro) | `data/raw/insee/revenus_communes.csv` |
+| **`test_insee_population.py`** | Population légale par commune | opendata | `data/raw/insee/population_communes.csv` |
+
+### 2. Scripts d'exploration (facultatifs — ne téléchargent aucune donnée)
+
+Ceux-là ont servi à **découvrir les URLs** des jeux de données sur l'API data.gouv.fr. Ils affichent seulement des informations dans la console ; tu n'as **pas besoin de les relancer** pour reconstituer le dataset.
+
+| Script (`src/`) | Rôle |
+|---|---|
+| `test_api.py` | Teste la connexion à l'API data.gouv.fr (code de statut HTTP) |
+| `extract_dvf.py` | Recherche le jeu de données DVF sur l'API et affiche son titre + son `id` |
+| `list_dvf_ressources.py` | Liste toutes les ressources (URLs des fichiers) du jeu DVF |
+| `revenu_communes.py` | Recherche les jeux de données « niveau de vie / commune » sur l'API |
+
+### 3. Tout télécharger en une fois
+
+```bash
+# Depuis la racine du projet
+cd src
+
+# 1. DVF — les 5 années de transactions (fichiers lourds, ~1 Go au total, barre de progression)
+python download_dvf.py
+
+# 2. Référentiel géographique des communes
+python referenciel_des_comunes.py
+
+# 3. Revenu médian par commune (INSEE)
+python revenu_comunes_data.py
+
+# 4. Population par commune
+python test_insee_population.py
+
+cd ..
+```
+
+Une fois ces 4 scripts terminés, le dossier `data/raw/` contient toutes les données brutes nécessaires. On peut alors enchaîner sur la **Phase 2 — ETL** (`src/etl/`) pour décompresser, nettoyer et consolider.
 
 ---
 
@@ -148,6 +202,7 @@ DB_NAME=immobilier_dvf
 
 ### Phase 1 — Collecte des données
 Téléchargement des 5 années de DVF (2021-2025), du référentiel des communes (geo.api.gouv.fr), de la population et des revenus médians (INSEE). Scripts dans `src/`.
+👉 Détail des scripts et commandes : voir [Télécharger le jeu de données (collecte)](#-télécharger-le-jeu-de-données-collecte).
 
 ### Phase 2 — ETL (`src/etl/`)
 - **Extraction** : décompression des ZIP DVF → fichiers `.txt`.
